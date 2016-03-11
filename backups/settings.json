@@ -1,0 +1,5 @@
+{
+  "pid_svc_api_uri": "http://localhost/pidsvc/controller",
+  "backups_dir": "/opt/backups/repo/",
+  "conf_file_locs": "/etc/httpd/sites-available/default.conf"
+}
