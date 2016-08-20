@@ -11,15 +11,14 @@ class PidSvcBackupException(Exception):
 
 
 # backup PID Svc Data Store via API
-def backup_pid_svc(pid_api_uri, backups_dir, pid_bkp_file):
-
+def backup_pidsvc(pidsvc_api_uri, backups_dir, pidsvc_bkp_file, pidsvc_usr, pidsvc_pwd):
     # see https://www.seegrid.csiro.au/wiki/Siss/PIDServiceAPI#Partial_47Full_Data_Store_Backup
-    backup_url = pid_api_uri + '?cmd=partial_backup' \
+    backup_url = pidsvc_api_uri + '?cmd=partial_backup' \
                                '&deprecated=false' \
                                '&lookup=true' \
                                '&format=xml'
 
-    r = requests.get(backup_url, stream=True)
+    r = requests.get(backup_url, stream=True, auth=(pidsvc_usr, pidsvc_pwd))
     if r.status_code == 200:
         # write retrieved XML to a file-like object
         raw_xml = StringIO.StringIO()
@@ -27,7 +26,7 @@ def backup_pid_svc(pid_api_uri, backups_dir, pid_bkp_file):
             raw_xml.write(chunk)
 
         # set backup file path
-        filepath = backups_dir + pid_bkp_file
+        filepath = backups_dir + pidsvc_bkp_file
 
         # save XML file pretty printed
         xml_tree = etree.fromstring(raw_xml.getvalue())
@@ -39,7 +38,7 @@ def backup_pid_svc(pid_api_uri, backups_dir, pid_bkp_file):
         raise PidSvcBackupException('PID Svc Data Store backup failed: ' + str(r.status_code) + ', ' + r.text)
 
 
-def backup_apache_config(conf_file_paths, backups_dir, apache_bkp_file):
+def backup_apache(conf_file_paths, backups_dir, apache_bkp_file):
     # get each file, cconcatenate it into one conf file
     conf_file = backups_dir + apache_bkp_file
     with open(conf_file, 'w') as outfile:
@@ -67,17 +66,14 @@ if __name__ == "__main__":
     # populated settings & credentials
     settings = json.load(open('/opt/backups/settings.json'))
 
-    # run PID SVC backup
-    backup_pid_svc(settings['pid_api_uri'], settings['backups_dir'], settings['pid_bkp_file'])
+    # backup PIDSvc data
+    backup_pidsvc(settings['pidsvc_api_uri'], settings['backups_dir'], settings['pidsvc_bkp_file'], settings['pidsvc_usr'], settings['pidsvc_pwd'])
 
-    # backup Apache config
-    conf_file_paths = [
-        '/etc/httpd/sites-available/default.conf'
-    ]
-    backup_apache_config(conf_file_paths, settings['backups_dir'], settings['apache_bkp_file'])
+    # backup Apache conf
+    backup_apache(settings['apache_conf_paths'], settings['backups_dir'], settings['apache_bkp_file'])
 
-    # push backups to Git repo
-    try:
-        send_backups_to_git(settings['backups_dir'])
-    except git.exc.GitCommandError:
-        pass
+#    # push backups to Git repo
+#    try:
+#        send_backups_to_git(settings['backups_dir'])
+#    except git.exc.GitCommandError:
+#        pass
