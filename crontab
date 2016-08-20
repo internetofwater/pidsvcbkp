@@ -1,2 +1,2 @@
 #min    hr      day     mnth    dow
-15      1       *       *       *       python /opt/backups/backup.py
+15      1       *       *       *       python /opt/backups/backup.py /opt/settings.json

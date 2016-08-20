@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 import json
 import requests
@@ -63,8 +64,8 @@ def send_backups_to_git(backups_dir):
 
 
 if __name__ == "__main__":
-    # populated settings & credentials
-    settings = json.load(open('/opt/backups/settings.json'))
+    # populated settings from a runtime nominated settings.json file
+    settings = json.load(open(sys.argv[1]))
 
     # backup PIDSvc data
     backup_pidsvc(settings['pidsvc_api_uri'], settings['backups_dir'], settings['pidsvc_bkp_file'], settings['pidsvc_usr'], settings['pidsvc_pwd'])
@@ -72,8 +73,8 @@ if __name__ == "__main__":
     # backup Apache conf
     backup_apache(settings['apache_conf_paths'], settings['backups_dir'], settings['apache_bkp_file'])
 
-#    # push backups to Git repo
-#    try:
-#        send_backups_to_git(settings['backups_dir'])
-#    except git.exc.GitCommandError:
-#        pass
+    # push backups to Git repo
+    try:
+        send_backups_to_git(settings['backups_dir'])
+    except git.exc.GitCommandError as e:
+        print e
