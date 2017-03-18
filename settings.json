@@ -1,11 +1,19 @@
 {
   "backups_dir": "",
-  "pidsvc_api_uri": "http://localhost/pidsvc/controller",
-  "pidsvc_bkp_file": "pidsvc.xml",
-  "pidsvc_usr": "",
-  "pidsvc_pwd": "",
-  "apache_conf_paths": ["/etc/apache2/sites-available/000-default.conf"],
-  "apache_bkp_file": "apache.conf",
   "git_usr": "",
-  "git_pwd": ""
+  "git_pwd": "",
+  "pidsvcs": [
+    {
+      "api_uri": "http://localhost/<PID_SVC_INSTANCE_NAME>/controller",
+      "bkp_file": "<PID_SVC_INSTANCE_NAME>.xml",
+      "usr": "<PID_SVC_INSTANCE_USR>",
+      "pwd": "<PID_SVC_INSTANCE_PWD>"
+    }
+  ],
+  "apaches": [
+    {
+      "path": "/etc/apache2/sites-available/<APACHE_CONF_FILENAME>.conf",
+      "bkp_file": "<APACHE_CONF_FILENAME>.conf"
+    }
+  ]
 }

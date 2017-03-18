@@ -2,7 +2,7 @@ import sys
 from datetime import datetime
 import json
 import requests
-import StringIO
+import io
 from lxml import etree
 import git
 
@@ -22,7 +22,7 @@ def backup_pidsvc(pidsvc_api_uri, backups_dir, pidsvc_bkp_file, pidsvc_usr, pids
     r = requests.get(backup_url, stream=True, auth=(pidsvc_usr, pidsvc_pwd))
     if r.status_code == 200:
         # write retrieved XML to a file-like object
-        raw_xml = StringIO.StringIO()
+        raw_xml = io.StringIO()
         for chunk in r.iter_content(1024):
             raw_xml.write(chunk)
 
@@ -39,8 +39,13 @@ def backup_pidsvc(pidsvc_api_uri, backups_dir, pidsvc_bkp_file, pidsvc_usr, pids
         raise PidSvcBackupException('PID Svc Data Store backup failed: ' + str(r.status_code) + ', ' + r.text)
 
 
+def backup_pidsvcs_all(pidsvcs):
+    for pidsvc in pidsvcs:
+        backup_pidsvc(pidsvc['api_uri'], pidsvc['bkp_file'], pidsvc['usr'], pidsvc['pwd'])
+
+
 def backup_apache(conf_file_paths, backups_dir, apache_bkp_file):
-    # get each file, cconcatenate it into one conf file
+    # get each file, concatenate it into one conf file
     conf_file = backups_dir + apache_bkp_file
     with open(conf_file, 'w') as outfile:
         for f in conf_file_paths:
@@ -51,6 +56,11 @@ def backup_apache(conf_file_paths, backups_dir, apache_bkp_file):
                 outfile.write(infile.read())
 
     return True
+
+
+def backup_apaches_all(apache_confs):
+    for apache_conf in apache_confs:
+        backup_apache(apache_conf['path'], apache_conf['bkp_file'])
 
 
 def send_backups_to_git(backups_dir):
@@ -67,14 +77,14 @@ if __name__ == "__main__":
     # populated settings from a runtime nominated settings.json file
     settings = json.load(open(sys.argv[1]))
 
-    # backup PIDSvc data
-    backup_pidsvc(settings['pidsvc_api_uri'], settings['backups_dir'], settings['pidsvc_bkp_file'], settings['pidsvc_usr'], settings['pidsvc_pwd'])
+    # backup all PID Svcs data
+    backup_pidsvcs_all(settings['pidsvcs'])
 
-    # backup Apache conf
-    backup_apache(settings['apache_conf_paths'], settings['backups_dir'], settings['apache_bkp_file'])
+    # backup all Apache confs
+    backup_apaches_all(settings['apaches'])
 
     # push backups to Git repo
     try:
         send_backups_to_git(settings['backups_dir'])
     except git.exc.GitCommandError as e:
-        print e
+        print(e)
