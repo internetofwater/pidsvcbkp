@@ -22,7 +22,7 @@ def backup_pidsvc(pidsvc_api_uri, backups_dir, pidsvc_bkp_file, pidsvc_usr, pids
     r = requests.get(backup_url, stream=True, auth=(pidsvc_usr, pidsvc_pwd))
     if r.status_code == 200:
         # write retrieved XML to a file-like object
-        raw_xml = io.StringIO()
+        raw_xml = io.BytesIO()
         for chunk in r.iter_content(1024):
             raw_xml.write(chunk)
 
@@ -30,7 +30,7 @@ def backup_pidsvc(pidsvc_api_uri, backups_dir, pidsvc_bkp_file, pidsvc_usr, pids
         filepath = backups_dir + pidsvc_bkp_file
 
         # save XML file pretty printed
-        xml_tree = etree.fromstring(raw_xml.getvalue())
+        xml_tree = etree.fromstring(raw_xml.read().decode('UTF-8'))
         with open(filepath, 'w') as f:
             f.write(etree.tostring(xml_tree, pretty_print=True))
 
