@@ -39,12 +39,12 @@ def backup_pidsvc(pidsvc_api_uri, backups_dir, pidsvc_bkp_file, pidsvc_usr, pids
         raise PidSvcBackupException('PID Svc Data Store backup failed: ' + str(r.status_code) + ', ' + r.text)
 
 
-def backup_pidsvcs_all(pidsvcs):
+def backup_pidsvcs_all(backups_dir, pidsvcs):
     for pidsvc in pidsvcs:
-        backup_pidsvc(pidsvc['api_uri'], pidsvc['bkp_file'], pidsvc['usr'], pidsvc['pwd'])
+        backup_pidsvc(pidsvc['api_uri'], backups_dir, pidsvc['bkp_file'], pidsvc['usr'], pidsvc['pwd'])
 
 
-def backup_apache(conf_file_paths, backups_dir, apache_bkp_file):
+def backup_apache(backups_dir, apache_bkp_file, conf_file_paths):
     # get each file, concatenate it into one conf file
     conf_file = backups_dir + apache_bkp_file
     with open(conf_file, 'w') as outfile:
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     settings = json.load(open(sys.argv[1]))
 
     # backup all PID Svcs data
-    backup_pidsvcs_all(settings['pidsvcs'])
+    backup_pidsvcs_all(settings['backups_dir'], settings['pidsvcs'])
 
     # backup all Apache confs
     backup_apaches_all(settings['apaches'])
