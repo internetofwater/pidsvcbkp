@@ -4,6 +4,9 @@ import json
 import requests
 import io
 from lxml import etree
+import glob
+import shutil
+import os
 import git
 
 
@@ -21,17 +24,12 @@ def backup_pidsvc(pidsvc_api_uri, backups_dir, pidsvc_bkp_file, pidsvc_usr, pids
 
     r = requests.get(backup_url, stream=True, auth=(pidsvc_usr, pidsvc_pwd))
     if r.status_code == 200:
-        # write retrieved XML to a file-like object
-        raw_xml = io.BytesIO()
-        for chunk in r.iter_content(1024):
-            raw_xml.write(chunk)
-
         # set backup file path
         filepath = backups_dir + pidsvc_bkp_file
 
-        # save XML file pretty printed
-        xml_tree = etree.fromstring(raw_xml.read().decode('UTF-8'))
-        with open(filepath, 'w') as f:
+        # save XML file, pretty printed
+	xml_tree = etree.fromstring(r.content)
+        with open(filepath, 'wb') as f:
             f.write(etree.tostring(xml_tree, pretty_print=True))
 
         return True
@@ -44,28 +42,22 @@ def backup_pidsvcs_all(backups_dir, pidsvcs):
         backup_pidsvc(pidsvc['api_uri'], backups_dir, pidsvc['bkp_file'], pidsvc['usr'], pidsvc['pwd'])
 
 
-def backup_apache(backups_dir, apache_bkp_file, conf_file_paths):
-    # get each file, concatenate it into one conf file
-    conf_file = backups_dir + apache_bkp_file
-    with open(conf_file, 'w') as outfile:
-        for f in conf_file_paths:
-            outfile.write('#\n')
-            outfile.write('# ' + f)
-            outfile.write('#\n')
-            with open(f) as infile:
-                outfile.write(infile.read())
+def backup_apache(apache_conf_file_path, backups_dir, apache_conf_bkp_file):
+    shutil.copyfile(apache_conf_file_path, os.path.join(backups_dir, apache_conf_bkp_file))
 
     return True
 
 
-def backup_apaches_all(apache_confs):
-    for apache_conf in apache_confs:
-        backup_apache(apache_conf['path'], apache_conf['bkp_file'])
+def backup_apaches_all(backups_dir, apaches):
+    for apache in apaches:
+        backup_apache(apache['path'], backups_dir, apache['bkp_file'])
 
 
 def send_backups_to_git(backups_dir):
     repo = git.Repo(backups_dir)
-    repo.git.add(u=True)
+    # add all files
+    for f in glob.glob(backups_dir):
+        repo.git.add(f)
     repo.git.commit(m='backup')
     # http://stackoverflow.com/questions/8588768/git-push-username-password-how-to-avoid
     repo.git.push()
@@ -81,10 +73,10 @@ if __name__ == "__main__":
     backup_pidsvcs_all(settings['backups_dir'], settings['pidsvcs'])
 
     # backup all Apache confs
-    backup_apaches_all(settings['apaches'])
+    backup_apaches_all(settings['backups_dir'], settings['apaches'])
 
     # push backups to Git repo
     try:
         send_backups_to_git(settings['backups_dir'])
-    except git.exc.GitCommandError as e:
+    except Exception as e:
         print(e)
