@@ -28,7 +28,7 @@ def backup_pidsvc(pidsvc_api_uri, backups_dir, pidsvc_bkp_file, pidsvc_usr, pids
         filepath = backups_dir + pidsvc_bkp_file
 
         # save XML file, pretty printed
-	xml_tree = etree.fromstring(r.content)
+        xml_tree = etree.fromstring(r.content)
         with open(filepath, 'wb') as f:
             f.write(etree.tostring(xml_tree, pretty_print=True))
 
@@ -44,8 +44,6 @@ def backup_pidsvcs_all(backups_dir, pidsvcs):
 
 def backup_apache(apache_conf_file_path, backups_dir, apache_conf_bkp_file):
     shutil.copyfile(apache_conf_file_path, os.path.join(backups_dir, apache_conf_bkp_file))
-
-    return True
 
 
 def backup_apaches_all(backups_dir, apaches):

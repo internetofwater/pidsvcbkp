@@ -39,4 +39,5 @@ NOTE: test runs and crontab runs must all be operated by the same user that crea
 ## Authors and Contact
 **Nicholas Car**  
 Geoscience Australia  
-<nicholas.car@ga.gov.au>
+<nicholas.car@ga.gov.au>  
+<http://orcid.org/0000-0002-8742-7730>  
